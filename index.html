@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>OpenAI Eğitim Platformu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background: #f5f6fa; }
+    .container { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 270px;
+      background: #23254a;
+      color: #fff;
+      padding: 30px 0 0 0;
+      box-shadow: 2px 0 8px #1a1940a8;
+      min-height: 100vh;
+      position: fixed;
+      z-index: 9;
+    }
+    .sidebar h2 { text-align: center; margin-bottom: 28px; letter-spacing: 1px; font-size: 22px;}
+    .sidebar ul { list-style:none; padding:0; margin:0;}
+    .sidebar li { }
+    .sidebar button {
+      width: 87%; margin: 8px 6%; padding: 12px 14px; border:none; border-radius: 7px;
+      background: none; color:#fff; text-align:left; font-size: 16px; cursor: pointer;
+      transition: background .15s;
+    }
+    .sidebar button.active,
+    .sidebar button:hover { background: #3b3c5c;}
+    .main { margin-left: 270px; padding: 36px 6vw 36px 2vw; flex: 1;}
+    @media (max-width:900px){
+      .sidebar{ position:relative; width:100vw; min-height:unset; padding-bottom:18px;}
+      .main{margin-left:0;padding: 16px 2vw;}
+    }
+    h1{font-size: 2.1em;margin-bottom:10px;}
+    h2{font-size:1.4em;margin:24px 0 12px;}
+    h3{font-size:1.07em; margin:22px 0 8px;}
+    .section{background:#fff;border-radius:12px;box-shadow:0 1px 12px #eee;padding:22px 18px 14px;margin-bottom:30px;}
+    .codeblock{background:#f2f3fb;border-radius:7px;padding:14px 13px;margin:14px 0;position:relative; font-family:monospace;font-size:1em;}
+    .copybtn{
+      position:absolute;top:11px;right:13px;padding:2px 11px 3px;
+      background:#23254a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;
+    }
+    .quiz{margin:18px 0;}
+    .quizq{font-weight:600;margin:8px 0;}
+    .quiz-opt{display:block;margin:6px 0;cursor:pointer;}
+    .quiz-result{margin:8px 0 2px;font-weight:600;}
+    .checklist{margin:20px 0 10px;padding:13px 13px 2px;background:#f9f9fc;border-radius:8px;border:1px solid #e4e9f2;}
+    .checklist label{display:block;margin:9px 0;}
+    .checklist input[type=checkbox]{margin-right:7px;}
+    .note{background:#f7f1ff;padding:10px 13px;border-left:4px solid #8f70ff;border-radius:6px;font-size:15px;margin:9px 0;}
+    .table-scroller{overflow-x:auto;}
+    table{border-collapse:collapse;margin:13px 0;}
+    th,td{border:1px solid #d5dbe2;padding:7px 12px;font-size:15px;}
+    th{background:#e9eafe;}
+    a {color: #1b2494;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Modüller</h2>
+      <ul id="modList"></ul>
+    </nav>
+    <main class="main" id="mainContent"></main>
+  </div>
+  <script>
+    // === TÜM MODÜLLERİN VERİ YAPISI ===
+    const modules = [
+
+      // -- MODÜL 1 --
+      {
+        title: "MODÜL 1: OpenAI ile Başlarken",
+        sections: [
+          {
+            heading: "1.1 Hesap Oluşturma ve Giriş",
+            content: `
+              <div>
+                OpenAI API hizmetlerini kullanabilmek için bir OpenAI hesabı oluşturmanız gerekir. Kurumsal kullanım için iş e-postası ile kayıt önerilir.<br>
+                <b>Adımlar:</b>
+                <ul>
+                  <li><a href="https://platform.openai.com/signup" target="_blank">platform.openai.com/signup</a> adresine gidin.</li>
+                  <li>E-posta veya Google/Microsoft hesabı ile kaydolun.</li>
+                  <li>Mail doğrulaması yapın.</li>
+                  <li>Giriş yaptıktan sonra Platform Dashboard sizi karşılar.</li>
+                </ul>
+                <div class="note">Not: Organizasyon hesabı oluşturursanız, ekip üyeleri “Settings &gt; Members” kısmından davet edilebilir.</div>
+              </div>
+            `
+          },
+          {
+            heading: "1.2 API Anahtarı (API Key) Alma",
+            content: `
+              <div>
+                OpenAI API ile programatik işlem yapmak için gizli bir “API anahtarı” kullanılır.<br>
+                <b>Adımlar:</b>
+                <ul>
+                  <li>Sağ üstten profilinize tıklayın &gt; View API Keys</li>
+                  <li>“+ Create new secret key” butonuna basın.</li>
+                  <li>Oluşan anahtarı bir yere kopyalayın (sadece 1 kere görünür).</li>
+                </ul>
+                <div class="note">Güvenlik Uyarısı: Bu anahtarı kodlarda paylaşmayın veya herkese açık platformlarda yayınlamayın. Gerekirse anahtarı iptal edin.</div>
+              </div>
+            `
+          },
+          {
+            heading: "1.3 İlk API Çağrısını Yapmak",
+            content: `
+              <div>
+                API anahtarını aldıktan sonra ilk isteği ya terminal (<b>cURL</b>) ya da <b>Python</b> ile göndererek sistemi test edebilirsiniz.<br>
+                <b>Python ile ChatCompletion isteği örneği:</b>
+                <div class="codeblock"><button class="copybtn" onclick="copyCode(this)">Kopyala</button>
+import openai
+
+openai.api_key = "API_ANAHTARINIZ"
+
+response = openai.ChatCompletion.create(
+  model="gpt-3.5-turbo",
+  messages=[
+    {"role": "user", "content": "Merhaba, nasılsın?"}
+  ]
+)
+
+print(response.choices[0].message["content"])</div>
+                <div class="note">İlk çağrıyı yaparken "gpt-3.5-turbo" modeliyle başlayabilirsiniz. Daha sonra "gpt-4" ve "gpt-4o" kullanabilirsiniz.</div>
+              </div>
+            `
+          },
+          {
+            heading: "1.4 Hata Yönetimi",
+            content: `
+              <div>
+                <b>Sık Karşılaşılan Hatalar ve Çözümler:</b>
+                <div class="table-scroller">
+                  <table>
+                    <tr><th>Hata</th><th>Anlamı</th><th>Çözüm</th></tr>
+                    <tr><td>401 Unauthorized</td><td>API key eksik veya hatalı</td><td>Anahtarı kontrol edin</td></tr>
+                    <tr><td>429 Rate Limit</td><td>Limit aşıldı</td><td>Kullanımı düşürün, zamanlayın</td></tr>
+                    <tr><td>500 Server Error</td><td>Geçici sunucu sorunu</td><td>Tekrar deneyin</td></tr>
+                  </table>
+                </div>
+              </div>
+            `
+          },
+          {
+            heading: "Uygulamalı Alıştırma",
+            content: `
+              <div>
+                <b>Görev:</b>
+                <ul>
+                  <li>Hesabınızı oluşturun ve doğrulayın</li>
+                  <li>API anahtarınızı üretin</li>
+                  <li>Python ile bir ChatCompletion çağrısı gönderin</li>
+                  <li>Yanıtı yazdırın</li>
+                </ul>
+                <div class="note">
+                  <b>Teslim Formatı:</b>
+                  <ul>
+                    <li>Kullandığınız kod (Yorum satırlarıyla)</li>
+                    <li>Çıktının ekran görüntüsü</li>
+                    <li>Karşılaştığınız hata varsa çözüm notu</li>
+                  </ul>
+                </div>
+              </div>
+            `
+          },
+          {
+            heading: "Quiz",
+            content: quizHTML([
+              {
+                question: "OpenAI API’ye erişmek için ilk yapmanız gereken işlem nedir?",
+                options: [
+                  "playground kullanmak",
+                  "API anahtarı oluşturmak",
+                  "Fine-tuning başlatmak",
+                  "assistant rolü tanımlamak"
+                ],
+                answer: 1
+              },
+              {
+                question: "Aşağıdaki rollerden hangisi, modelin rolünü veya davranışını tanımlar?",
+                options: [
+                  "user",
+                  "assistant",
+                  "system",
+                  "developer"
+                ],
+                answer: 2
+              }
+            ])
+          },
+          {
+            heading: "Self-Checklist",
+            content: checklistHTML([
+              "Hesap oluşturmayı öğrendim",
+              "API key nedir anladım",
+              "İlk API çağrısını denedim"
+            ])
+          }
+        ]
+      },
+
+      // -- MODÜL 2 --
+      {
+        title: "MODÜL 2: Çekirdek Kavramlar – Tokenlar, Promptlar, Modeller ve Fiyatlandırma",
+        sections: [
+          {
+            heading: "2.1 Token Nedir?",
+            content: `
+              <div>
+                <b>Tanım:</b> Token, modelin birim olarak işlediği kelime ya da kelime parçalarıdır.<br>
+                <b>Örnekler:</b>
+                <ul>
+                  <li>"Merhaba" → genellikle 1 token</li>
+                  <li>"çalışıyorum" → 1 veya 2 token</li>
+                  <li>"Hello, how are you?" → 5 token</li>
+                </ul>
+                <div class="note">GPT-3.5 ve GPT-4 modelleri <b>tiktoken</b> adlı tokenizer yapısını kullanır.<br>1.000 token ≈ 750 kelime (yaklaşık)</div>
+                <ul>
+                  <li><a href="https://platform.openai.com/tokenizer" target="_blank">OpenAI Tokenizer Aracı</a></li>
+                </ul>
+              </div>
+            `
+          },
+          {
+            heading: "2.2 Prompt Nedir?",
+            content: `
+              <div>
+                <b>Tanım:</b> Prompt, modele verdiğiniz girdidir.<br>
+                <div class="codeblock"><button class="copybtn" onclick="copyCode(this)">Kopyala</button>
+[{"role": "system", "content": "Sen bilgili bir finans danışmanısın."},
+{"role": "user", "content": "Bana enflasyon nedir açıklar mısın?"}]</div>
+                <div class="note">
+                  <ul>
+                    <li>system: Modelin rolünü veya davranış şeklini tanımlar</li>
+                    <li>user: Kullanıcının sorduğu soru</li>
+                    <li>assistant: Modelin yanıtı</li>
+                  </ul>
+                  <b>İyi prompt</b> = Açık, yönlendirici ve hedefi net belirten metin.
+                </div>
+              </div>
+            `
+          },
+          {
+            heading: "2.3 Completion (Tamamlama) Nedir?",
+            content: `
+              <div>
+                <b>Açıklama:</b> Completion, modele verilen girdiye karşılık aldığı yanıttır.<br>
+                <b>Örnek:</b> <br>
+                Prompt: "Ay'ın yüzeyinde neden atmosfer yok?"<br>
+                Completion: "Ay'ın düşük kütleçekimi, atmosferi tutacak kadar güçlü değildir..."<br>
+                <div class="note">
+                  Chat modeli için: assistant mesajıdır<br>
+                  Text modelinde (gpt-3.5 text-davinci): doğrudan string döner
+                </div>
+              </div>
+            `
+          },
+          {
+            heading: "2.4 Model Türleri ve Karşılaştırma",
+            content: `
+              <div>
+                <b>Kullanılan Başlıca Modeller:</b>
+                <div class="table-scroller">
+                  <table>
+                    <tr><th>Model</th><th>Özellik</th><th>Kullanım Alanı</th></tr>
+                    <tr><td>gpt-3.5-turbo</td><td>Hızlı, ucuz</td><td>Sohbet botları, temel görevler</td></tr>
+                    <tr><td>gpt-4</td><td>Daha güçlü</td><td>Zor görevler, analiz</td></tr>
+                    <tr><td>gpt-4o</td><td>En yeni, çok modlu</td><td>Görsel, sesli girişler + hızlı</td></tr>
+                    <tr><td>text-embedding-ada-002</td><td>Gömme (embedding) modeli</td><td>Arama, sıralama, benzerlik</td></tr>
+                  </table>
+                </div>
+                <div class="note">gpt-4o, hem daha güçlü hem daha ucuz hem de daha hızlıdır.</div>
+              </div>
+            `
+          },
+          {
+            heading: "2.5 Fiyatlandırma ve Hesaplama",
+            content: `
+              <div>
+                <b>Açıklama:</b> Fiyatlar 1.000 token başına hesaplanır.<br>
+                <div class="table-scroller">
+                  <table>
+                    <tr><th>Model</th><th>Girdi (input)</th><th>Çıktı (output)</th><th>Kullanım Örneği</th></tr>
+                    <tr><td>gpt-3.5-turbo</td><td>$0.0005 / 1K</td><td>$0.0015 / 1K</td><td>Düşük bütçeli görevler</td></tr>
+                    <tr><td>gpt-4</td><td>$0.01 / 1K</td><td>$0.03 / 1K</td><td>Yüksek doğruluk gerekliyse</td></tr>
+                    <tr><td>gpt-4o</td><td>$0.005 / 1K</td><td>$0.015 / 1K</td><td>Denge: fiyat + kalite</td></tr>
+                  </table>
+                </div>
+                <ul>
+                  <li><a href="https://openai.com/pricing" target="_blank">Güncel fiyatlar</a></li>
+                </ul>
+              </div>
+            `
+          },
+          {
+            heading: "Quiz",
+            content: quizHTML([
+              {
+                question: "Aşağıdakilerden hangisi bir \"token\" değildir?",
+                options: ["“hava”", "“.”", "“2+2=4”", "Prompt'un tamamı"],
+                answer: 3
+              },
+              {
+                question: "gpt-4 modelinde 500 token giriş ve 1000 token çıkış için yaklaşık kaç cent ödeme yapılır?",
+                options: ["1 cent", "2 cent", "3 cent", "4 cent"],
+                answer: 2
+              }
+            ])
+          },
+          {
+            heading: "Self-Checklist",
+            content: checklistHTML([
+              "Token kavramı anlaşıldı",
+              "Prompt yapısı öğrenildi",
+              "Completion ile çıktı ilişkisi kuruldu",
+              "Farklı model türleri öğrenildi",
+              "Fiyatlandırma hesaplaması yapıldı"
+            ])
+          }
+        ]
+      },
+
+      // --- Modül 3 ---
+      {
+        title: "MODÜL 3: OpenAI Araçları",
+        sections: [
+          {
+            heading: "3.1 Playground (Oyun Alanı)",
+            content: `
+        <div>
+          Playground, OpenAI modellerini denemek için geliştirilmiş etkileşimli bir test ortamıdır.<br>
+          <b>Yapabilecekleriniz:</b>
+          <ul>
+            <li>Sistem & kullanıcı mesajları yazmak</li>
+            <li>Model ve versiyon seçmek</li>
+            <li>Yanıt ayarlarını değiştirmek</li>
+            <li>Yanıtları dışa aktarmak, paylaşmak</li>
+          </ul>
+          <div class="note">Örnek: Model: gpt-4o, Prompt: "Yapay zekanın tarım üzerindeki olumlu ve olumsuz etkilerini 5 madde ile açıkla."</div>
+        </div>
+      `
+          },
+          {
+            heading: "3.2 Usage Dashboard (Kullanım Paneli)",
+            content: `
+        <div>
+          Bu panel, ne kadar API çağrısı yaptığınızı ve faturalama durumunuzu görmenizi sağlar.<br>
+          <ul>
+            <li>Günlük/aylık kullanım grafikleri</li>
+            <li>Hangi model kaç token harcamış</li>
+            <li>Maliyet tahmini</li>
+            <li>Limitinize yaklaşıp yaklaşmadığınız</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "3.3 Fine-Tuning (Modeli Özelleştirme)",
+            content: `
+        <div>
+          Kendi verinizle OpenAI modellerini özelleştirebilirsiniz.<br>
+          <b>Adımlar:</b>
+          <ol>
+            <li>Verinizi JSONL formatında hazırlayın</li>
+            <li><a href="https://platform.openai.com/finetune" target="_blank">Finetune adresinden</a> yükleyin</li>
+            <li>Eğitim sürecini başlatın ve model ismi alın</li>
+            <li>Bu modeli normal API çağrılarında kullanın</li>
+          </ol>
+          <div class="codeblock"><button class="copybtn" onclick="copyCode(this)">Kopyala</button>
+{"messages":[
+  {"role": "user", "content": "Kargom ne zaman gelir?"},
+  {"role": "assistant", "content": "Siparişiniz 1-3 iş günü içinde ulaşacaktır."}
+]}</div>
+          <div class="note">Fine-tuning için ücret alınır. Detaylı bilgi: Fiyatlandırma sayfası.</div>
+        </div>
+      `
+          },
+          {
+            heading: "3.4 Assistants API (Gelişmiş Uygulama API'si)",
+            content: `
+        <div>
+          OpenAI'nin “daha kalıcı hafızaya sahip” uygulama arayüzüdür. Birden fazla mesajı ve dosyayı takip edebilir.<br>
+          <b>Özellikler:</b>
+          <ul>
+            <li>Uzun vadeli konuşma bağlamı</li>
+            <li>Dosya yükleme ve okuma yeteneği</li>
+            <li>Arka planda görev oluşturma</li>
+            <li>Gelişmiş araç kombinasyonları</li>
+          </ul>
+          <div class="note"><a href="https://platform.openai.com/assistants" target="_blank">Playground’da örnekleri inceleyin</a></div>
+        </div>
+      `
+          }
+        ]
+      },
+
+// --- Modül 4 ---
+      {
+        title: "MODÜL 4: Model Optimizasyonu ve Prompt Mühendisliği",
+        sections: [
+          {
+            heading: "4.1 Temperature & Top-p (Rastlantısallık Ayarları)",
+            content: `
+        <div>
+          <b>Temperature</b>: Yanıt çeşitliliğini artırır (0: deterministik, 1: yaratıcı).<br>
+          <b>top_p</b>: Olasılığı en yüksek cevaplardan seçim yapar (1.0 = tüm olasılıklar).<br>
+          <div class="note">Genelde sadece biri değiştirilir. temperature=0.7 ve top_p=1.0 yaygın kombinasyondur.</div>
+        </div>
+      `
+          },
+          {
+            heading: "4.2 İyi Prompt Nasıl Yazılır?",
+            content: `
+        <div>
+          <b>Temel İlkeler:</b>
+          <ul>
+            <li>Açık ve net ol: Ne istediğini doğrudan söyle</li>
+            <li>Format iste: “JSON olarak yanıtla” gibi</li>
+            <li>Rol ver: "Sen bir hukuk danışmanısın."</li>
+            <li>Yöntem belirt: “Önce kısa tanım yap, sonra örnek ver.”</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "4.3 Few-Shot Learning (Örnekle Öğretme)",
+            content: `
+        <div>
+          Modelin ne yapmasını istediğinizi örneklerle göstererek öğretirsiniz.<br>
+          <div class="codeblock"><button class="copybtn" onclick="copyCode(this)">Kopyala</button>
+Soru: Python'da döngü nasıl kurulur?
+Yanıt: for i in range(5): print(i)
+
+Soru: Pandas'ta veri nasıl filtrelenir?
+Yanıt: df[df["yaş"] > 30]</div>
+        </div>
+      `
+          },
+          {
+            heading: "4.4 Formatlama Kontrolü",
+            content: `
+        <div>
+          <b>Yöntemler:</b>
+          <ul>
+            <li>"Cevabını sadece JSON formatında ver"</li>
+            <li>"Yanıtı sadece tablo ile açıkla"</li>
+            <li>"Çıktıyı 100 kelimeyle sınırla"</li>
+          </ul>
+          <div class="codeblock"><button class="copybtn" onclick="copyCode(this)">Kopyala</button>
+Bir öğrencinin adını, yaşını ve sınav notlarını içeren bir JSON nesnesi oluştur.</div>
+        </div>
+      `
+          },
+          {
+            heading: "4.5 Prompt Mühendisliği Uygulama Alanları",
+            content: `
+        <div>
+          <b>Kullanım – Örnek:</b>
+          <ul>
+            <li>Sınıflandırma: “Bu haber doğru mu yanlış mı? Yalnızca 'doğru' ya da 'yanlış' olarak yanıtla.”</li>
+            <li>Özetleme: “Bu paragrafı tek cümlede özetle.”</li>
+            <li>Dönüştürme: “Bu metni resmi dile çevir.”</li>
+            <li>Kod üretimi: “Python’da bir dosyayı satır satır oku.”</li>
+            <li>Veri çıkarımı: “Aşağıdaki metinden kişi adlarını listele.”</li>
+          </ul>
+        </div>
+      `
+          }
+        ]
+      },
+
+// --- Modül 5 ---
+      {
+        title: "MODÜL 5: OpenAI Platform Paneli – Kullanım, Kota ve Yönetim Araçları",
+        sections: [
+          {
+            heading: "5.1 Kullanım Takibi (Usage Dashboard)",
+            content: `
+        <div>
+          <a href="https://platform.openai.com/account/usage" target="_blank">platform.openai.com/account/usage</a><br>
+          Bu bölüm, ne kadar token harcadığınızı ve tahmini maliyetinizi gösterir.<br>
+          <ul>
+            <li>Günlük token kullanımı</li>
+            <li>Toplam kullanım maliyeti</li>
+            <li>Kullanılan model türleri ve oranları</li>
+            <li>Ne zaman kullanım patlaması oldu?</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "5.2 Kota Yönetimi (Quota & Rate Limit)",
+            content: `
+        <div>
+          OpenAI, her kullanıcıya bir kullanım limiti (quota) ve istek sınırı (rate limit) tanımlar.<br>
+          <b>Örnek:</b><br>
+          gpt-4o: 100 RPM, 50K TPM<br>
+          gpt-3.5-turbo: 3500 RPM, 300K TPM<br>
+          <div class="note">
+            <b>429 Rate Limit</b>: Çok sık istek gönderilirse alınır.<br>
+            Token sınırı aşıldıysa beklemeli veya azaltmalı.
+          </div>
+        </div>
+      `
+          },
+          {
+            heading: "5.3 Ekip Yönetimi (Organization & Members)",
+            content: `
+        <div>
+          Birden fazla kullanıcı aynı “organizasyon” çatısı altında çalışabilir.<br>
+          <b>İşlevler:</b>
+          <ul>
+            <li>Yeni üye davet et</li>
+            <li>Üyelere “Owner” veya “Member” rolü atama</li>
+            <li>API kullanımını kullanıcı bazlı takip etme</li>
+            <li>Ekip içi API key takibi</li>
+          </ul>
+          <div class="note">Kurumsal kullanımda her geliştirici kendi API key’iyle işlem yapmalı.</div>
+        </div>
+      `
+          },
+          {
+            heading: "5.4 Faturalama ve Ödemeler",
+            content: `
+        <div>
+          <a href="https://platform.openai.com/account/billing/overview" target="_blank">Billing sekmesi</a> ile:
+          <ul>
+            <li>Aylık harcamanızı görüntüleyin</li>
+            <li>Harcama limitiniz var mı kontrol edin</li>
+            <li>Ödeme yöntemini değiştirin veya ekleyin</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "5.5 Güvenlik & Anahtar Yönetimi",
+            content: `
+        <div>
+          <a href="https://platform.openai.com/account/api-keys" target="_blank">API Key sekmesi</a> ile:
+          <ul>
+            <li>Anahtarlar sadece bir kez görüntülenebilir</li>
+            <li>Paylaşılmamalı veya repo'ya konmamalı</li>
+            <li>Sızarsa hemen “Revoke” edilmeli</li>
+          </ul>
+          <div class="note">
+            <b>İpuçları:</b>
+            <ul>
+              <li>Her uygulama için ayrı API key üretin</li>
+              <li>Key’leri .env dosyasında saklayın</li>
+              <li>Kullanım durumuna göre anahtarları sürelendirin</li>
+            </ul>
+          </div>
+        </div>
+      `
+          }
+        ]
+      },
+
+// --- Modül 6 ---
+      {
+        title: "MODÜL 6: En İyi Kullanım Uygulamaları (Best Practices)",
+        sections: [
+          {
+            heading: "6.1 Güvenlik ve Gizlilik",
+            content: `
+        <div>
+          <b>Uygulanması Gerekenler:</b>
+          <ul>
+            <li>Hassas verileri modele girdi olarak vermeyin.</li>
+            <li>Kişisel veri içeren sistemlerde veri anonimleştirme uygulayın.</li>
+            <li>Kullanıcıdan gelen verileri hiçbir zaman eğitime veya saklamaya çalışmayın.</li>
+          </ul>
+          <div class="note">
+            <b>Ekstra Önlemler:</b>
+            <ul>
+              <li>API key’lerinizi .env dosyası gibi gizli yerlerde tutun.</li>
+              <li>Giriş loglarını kayıt altına alın, kimin hangi promptu gönderdiği izlenebilir olmalı.</li>
+            </ul>
+          </div>
+        </div>
+      `
+          },
+          {
+            heading: "6.2 Yanıt Kontrolü ve Kısıtlama",
+            content: `
+        <div>
+          <b>Model çıktılarının güvenli ve anlamlı kalabilmesi için bazı sınırlamalar uygulanmalıdır.</b><br>
+          <ul>
+            <li>max_tokens: Yanıtın uzunluğunu sınırlar</li>
+            <li>stop: Modelin belirli bir karakter/küme sonrası durmasını sağlar</li>
+            <li>temperature: Kontrolsüz yaratıcılığı azaltır</li>
+            <li>logit_bias: Belirli kelimelerin olasılığını yükseltip/düşürür</li>
+          </ul>
+          <div class="note">
+            Şüpheli içeriklerde yanıtı sınırlandırmak bir ön kontrol mekanizmasıdır. Uygulamanızda bu tür içerikleri tespit eden filtreleme kuralları da olmalı.
+          </div>
+        </div>
+      `
+          },
+          {
+            heading: "6.3 Etik Kullanım İlkeleri",
+            content: `
+        <div>
+          <b>Uygulama Kuralları:</b>
+          <ul>
+            <li>Modelin insan gibi davrandığı senaryolarda, kullanıcıya “AI tarafından üretildi” bilgisi verilmeli.</li>
+            <li>Yanıltıcı, dezenformasyon içerikli, manipülatif promptlar asla kullanılmamalıdır.</li>
+            <li>Kullanıcı verileri kayıt altına alınmadan önce açık rıza alınmalıdır.</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "6.4 Prompt Temizliği ve Doğruluk",
+            content: `
+        <div>
+          <ul>
+            <li>Karmaşık promptlar yerine net, sade ve görev odaklı promptlar kullanın.</li>
+            <li>Gerekiyorsa yazım kurallarını düzeltip modeli yönlendirin.</li>
+            <li>Promptlarda zaman, yer, görev, çıktı formatı gibi bilgiler net olmalı.</li>
+          </ul>
+        </div>
+      `
+          },
+          {
+            heading: "6.5 Verimlilik İpuçları",
+            content: `
+        <div>
+          <b>Performans ve Maliyet Optimizasyonu İçin:</b>
+          <ul>
+            <li>Aynı promptla birden fazla çıktı alacaksanız batch işlem yapın</li>
+            <li>gpt-3.5-turbo veya gpt-4o kullanın</li>
+            <li>max_tokens değerini sınırlandırın</li>
+            <li>Gereksiz mesaj geçmişini silin</li>
+          </ul>
+          <div class="note">Playground’daki “Show Prompt” özelliğiyle token sayısını tahmin edip optimize edebilirsiniz.</div>
+        </div>
+      `
+          }
+        ]
+      }
+
+    ];
+
+    // === Quiz ve Checklist yardımcı fonksiyonları ===
+    function quizHTML(qs){
+      return `<div class="quiz">${qs.map((q,i)=>`
+        <div class="quizq">${i+1}. ${q.question}</div>
+        ${q.options.map((op,j)=>`
+          <label class="quiz-opt"><input type="radio" name="q${i}" value="${j}" onchange="quizMark(event,${i},${q.answer})">${op}</label>
+        `).join('')}
+        <div class="quiz-result" id="quiz-result-${i}"></div>
+      `).join('')}
+      <button onclick="showAllQuizResults(${qs.length})" style="margin-top:12px;background:#23254a;color:#fff;border:none;border-radius:5px;padding:8px 18px;font-size:15px;cursor:pointer;">Cevapları Göster</button>
+      </div>`;
+    }
+    function checklistHTML(items){
+      return `<div class="checklist"><h3>Kendi İlerlemeni Kontrol Et</h3>
+        ${items.map((it,i)=>`
+          <label><input type="checkbox">${it}</label>
+        `).join('')}
+      </div>`;
+    }
+
+    // === MENÜYÜ VE MODÜLLERİ YÜKLEME ===
+    const modList = document.getElementById('modList');
+    modules.forEach((mod, idx) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<button ${idx==0?'class="active"':''} onclick="loadModule(${idx},this)">${mod.title}</button>`;
+      modList.appendChild(li);
+    });
+
+    function loadModule(idx, btn){
+      document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderModule(modules[idx]);
+      window.scrollTo(0,0);
+    }
+    function renderModule(mod){
+      const main = document.getElementById('mainContent');
+      let html = `<h1>${mod.title}</h1>`;
+      mod.sections.forEach(sec=>{
+        html += `<div class="section"><h2>${sec.heading}</h2>${sec.content}</div>`;
+      });
+      main.innerHTML = html;
+    }
+    window.onload = () => { renderModule(modules[0]); };
+
+    function copyCode(btn){
+      const code = btn.parentElement.textContent.replace('Kopyala','');
+      navigator.clipboard.writeText(code);
+      btn.textContent = "Kopyalandı!";
+      setTimeout(()=>btn.textContent="Kopyala",900);
+    }
+    function quizMark(e,qidx,rightIdx){
+      const parent = e.target.closest('.quiz');
+      const all = parent.querySelectorAll(`[name="q${qidx}"]`);
+      all.forEach(r=>r.disabled=true);
+      const ans = parseInt(e.target.value);
+      const result = parent.querySelector(`#quiz-result-${qidx}`);
+      if(ans === rightIdx){
+        result.textContent = "Doğru!";
+        result.style.color = "green";
+      }else{
+        result.textContent = `Yanlış. Doğru cevap: ${parent.querySelectorAll('.quiz-opt')[rightIdx].textContent.trim()}`;
+        result.style.color = "red";
+      }
+    }
+    function showAllQuizResults(len){
+      document.querySelectorAll('.quiz').forEach(quiz=>{
+        for(let i=0;i<len;i++){
+          if(!quiz.querySelector(`[name="q${i}"]:checked`)){
+            const result = quiz.querySelector(`#quiz-result-${i}`);
+            result.textContent = "Bir seçenek seçmelisiniz.";
+            result.style.color = "orange";
+          }
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
